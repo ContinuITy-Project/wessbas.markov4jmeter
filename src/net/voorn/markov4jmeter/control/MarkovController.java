@@ -628,6 +628,24 @@ public class MarkovController extends org.apache.jmeter.control.GenericControlle
                                     + this.currentState.getName() + "\"");
                 }
             }
+        } else {
+        	// Exit state was choosen
+        	 final ThinkTime thinkTime =
+                     transitionsThinkTimesMap.get(0);
+        	 
+             final long delay = thinkTime.getDelay();
+
+        	 try {
+        		 Thread.sleep(delay); 
+        	 } catch (final Exception ex) {
+
+                 MarkovController.logger.warn(
+
+                         "Think time delay of " + delay + " milliseconds "
+                                 + "could not be performed from state \""
+                                 + oldState.getName() + "\" to state \""
+                                 + this.currentState.getName() + "\"");
+             }
         }
 
         // System.out.println(this.currentState!=null?this.currentState.getName():new String("<EXIT>"));
