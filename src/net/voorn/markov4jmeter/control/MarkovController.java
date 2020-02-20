@@ -386,7 +386,7 @@ public class MarkovController extends org.apache.jmeter.control.GenericControlle
 
         this.sessionArrivalControllerEnabled = this.isArrivalCtrlEnabled();
         if (this.sessionArrivalControllerEnabled){
-            this.sessionArrivalController = SessionArrivalController.getInstance();
+            this.sessionArrivalController = SessionArrivalController.getInstance(getId());
             /* dangerous since several thread access this object but it works */
             this.sessionArrivalController.init(this.isArrivalCtrlLoggingEnabled(), this.getArrivalCtrlLogfile());
         }

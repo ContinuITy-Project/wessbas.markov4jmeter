@@ -2,6 +2,12 @@ Introduction:
 
 This document summarizes changes made in all releases.
 
+* 1.0.20200220 (Released 2020-02-20)
+ - Enable using multiple MarkovControllers with separate SessionArrivalControllers
+
+* 1.0.20181115 (Released 2018-11-15)
+ - Considering think times before the exit state
+
 * 1.0.20080617 (Released 2008-06-17)
  - Markov4JMeter ready for JMeter 2.3.2
  - Minor improvements to example profiles and tutorial

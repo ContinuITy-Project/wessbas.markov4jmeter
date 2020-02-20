@@ -21,6 +21,10 @@ package net.voorn.markov4jmeter.control;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import net.voorn.markov4jmeter.util.Markov4JMeterVersion;
 import org.apache.jmeter.util.JMeterUtils;
 
@@ -46,16 +50,11 @@ import org.apache.log.Logger;
  * responsibly for synchronizing the active session count and for maintaining 
  * the session entrance queue.</p>
  *
- * <p>This class is used in singleton mode, i.e. at any time at most one instance
- * exists and a reference to the instance is returned by calling 
- * <i>getInstance()</i>.</p>
+ * <p>This class is used in a per-controller singleton mode, i.e. each
+ * MarkovController can get at most one instance by calling <i>getInstance(id)</i>.</p>
  *
  * <p>When logging is enabled, the current number of active sessions is dumped
  *  to the given logfile.</p>
- *
- * <p>TODO: Change singleton-mode such that a singleton instance exists for 
- * each MarkovController. Therefore, the MarkovController's id should be passed
- * when calling <i>getInstance()</i>.</p>
  *
  * @author Andr&eacute; van Hoorn
  */
@@ -87,11 +86,11 @@ public class SessionArrivalController {
     /** Whether the test has ended or not. */
     private static boolean testEnded = true;
     
-    /** The singleton instance. */
-    private static SessionArrivalController instance = null;
+    /** The instances. */
+    private static final Map<Integer, SessionArrivalController> INSTANCES = new ConcurrentHashMap();
     
     /** Will be set appropriately on each invocation of enterSession() */
-    private static int allowedNum = -1;
+    private int allowedNum = -1;
     
     /** Creates a new instance of SessionArrivalController */
     private SessionArrivalController() {
@@ -102,13 +101,22 @@ public class SessionArrivalController {
      *
      * @return the instance.
      */
-    public static synchronized SessionArrivalController getInstance(){
-        if(SessionArrivalController.instance!=null)
-            return instance;
-        
-        SessionArrivalController.instance = new SessionArrivalController();
-        //StandardJMeterEngine.register(SessionArrivalController.instance);
-        return SessionArrivalController.instance;
+    public static SessionArrivalController getInstance(int controllerId) {
+    	SessionArrivalController instance = INSTANCES.get(controllerId);
+    	
+    	if (instance == null) {
+    		synchronized(SessionArrivalController.class) {
+    			instance = INSTANCES.get(controllerId);
+    			
+    			if (instance == null) {
+    				logger.info("Creating new instance for controller with ID " + controllerId);
+    				instance = new SessionArrivalController();
+    				INSTANCES.put(controllerId, instance);
+    			}
+    		}
+    	}
+    	
+    	return instance;
     }
     
     /**
@@ -271,8 +279,7 @@ public class SessionArrivalController {
         
         testEnded = true;
         System.out.println("Experiment stop time (ms):" + System.currentTimeMillis());
-        if (SessionArrivalController.instance != null){
-            SessionArrivalController instance = SessionArrivalController.instance;
+        for (SessionArrivalController instance : INSTANCES.values()) {
             try {
                 if (instance.writer!=null){
                     /* run once per test execution */
@@ -284,7 +291,8 @@ public class SessionArrivalController {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-            SessionArrivalController.instance = null;
         }
+        
+        INSTANCES.clear();
     }
 }
